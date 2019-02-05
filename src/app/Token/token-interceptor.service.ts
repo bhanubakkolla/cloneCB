@@ -5,7 +5,7 @@ import {
   HttpEvent,
   HttpInterceptor, HttpErrorResponse
 } from '@angular/common/http';
-
+import {CookieService} from 'ngx-cookie-service';
 import {AuthService} from '../services/auth.service';
 import {Observable, of} from 'rxjs';
 import {catchError} from 'rxjs/internal/operators';
@@ -14,12 +14,13 @@ import {catchError} from 'rxjs/internal/operators';
   providedIn: 'root'
 })
 export class TokenInterceptorService implements HttpInterceptor {
-  constructor(public auth: AuthService) { }
+  constructor(public auth: AuthService,
+  private cookie: CookieService) { }
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (localStorage.getItem('jwtToken')) {
+    if (this.cookie.get('jwtToken')) {
       req = req.clone({
         setHeaders: {
-          Authorization: `Bearer ` + localStorage.getItem('jwtToken')
+          Authorization: `Bearer ` + this.cookie.get('jwtToken')
         }
       });
     }
@@ -28,14 +29,10 @@ export class TokenInterceptorService implements HttpInterceptor {
       this.handleAuthError(error);
       return of(error);
     }) as any);
-    // throw new Error('Method not implemented.');
   }
   private handleAuthError(err: HttpErrorResponse): Observable<any> {
-    // handle your auth error or rethrow
-    if (err.status === 401) {
-      // navigate /delete cookies or whatever
+    if (err.status === 401  ) {
       console.log('handled error ' + err.status);
-
       return of(err.message);
     }
     throw err;
